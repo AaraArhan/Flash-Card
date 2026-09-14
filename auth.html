@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexAuth | Secure Login & Sign Up</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-base: #090d16;
+            --bg-card: rgba(18, 24, 38, 0.85);
+            --bg-input: #0e1422;
+            --border: #1f293d;
+            --border-focus: #6366f1;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-glow: rgba(99, 102, 241, 0.25);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, var(--bg-base) 75%);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Subtle background glow spheres */
+        .glow-sphere {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .sphere-1 {
+            width: 420px;
+            height: 420px;
+            background: rgba(99, 102, 241, 0.15);
+            top: -100px;
+            left: 15%;
+        }
+        .sphere-2 {
+            width: 360px;
+            height: 360px;
+            background: rgba(236, 72, 153, 0.12);
+            bottom: -50px;
+            right: 15%;
+        }
+
+        /* Container Card */
+        .auth-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 480px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 36px 32px;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Header / Brand */
+        .auth-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .brand-logo {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #ffffff;
+            box-shadow: 0 8px 20px var(--primary-glow);
+            margin-bottom: 14px;
+        }
+
+        .auth-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 6px;
+        }
+
+        .auth-subtitle {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+        }
+
+        /* Segmented Nav Tabs */
+        .tab-switcher {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: #0b111e;
+            border: 1px solid var(--border);
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            gap: 4px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 10px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            background: #1e273a;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Forms Layout */
+        .auth-form {
+            display: none;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .auth-form.active {
+            display: flex;
+            animation: fadeIn 0.25s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: relative;
+        }
+
+        .form-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            color: var(--text-dim);
+            font-size: 1rem;
+            pointer-events: none;
+            transition: color 0.2s ease;
+        }
+
+        .form-input {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 12px 42px 12px 42px;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .form-input:focus ~ .input-icon {
+            color: var(--border-focus);
+        }
+
+        .form-input.error {
+            border-color: var(--danger);
+        }
+
+        .form-input.success {
+            border-color: var(--success);
+        }
+
+        .btn-toggle-pwd {
+            position: absolute;
+            right: 12px;
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-toggle-pwd:hover {
+            color: var(--text-main);
+        }
+
+        .field-error {
+            font-size: 0.76rem;
+            color: var(--danger);
+            display: none;
+            margin-top: 2px;
+        }
+
+        /* Password Strength Indicator */
+        .pwd-strength-container {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .pwd-strength-bars {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            height: 4px;
+        }
+
+        .pwd-bar {
+            background: #1e293b;
+            border-radius: 2px;
+            transition: background 0.25s ease;
+        }
+
+        .pwd-strength-text {
+            font-size: 0.74rem;
+            color: var(--text-dim);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Row options (Remember me / Forgot Pwd) */
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.82rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .custom-checkbox {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .link-text {
+            color: #818cf8;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .link-text:hover {
+            color: #a5b4fc;
+            text-decoration: underline;
+        }
+
+        /* Primary Action Button */
+        .btn-submit {
+            width: 100%;
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            padding: 13px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px var(--primary-glow);
+            margin-top: 4px;
+        }
+
+        .btn-submit:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-submit:active {
+            transform: translateY(1px);
+        }
+
+        /* Social Divider & Buttons */
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 22px 0 16px;
+            color: var(--text-dim);
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .divider span {
+            padding: 0 12px;
+        }
+
+        .social-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn-social {
+            background: #0f1624;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 0.86rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-social:hover {
+            background: #182234;
+            border-color: #334155;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .toast {
+            min-width: 280px;
+            max-width: 380px;
+            padding: 14px 18px;
+            background: #111827;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.86rem;
+            color: var(--text-main);
+            transform: translateX(120%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: auto;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast-icon {
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .toast-success { border-left: 4px solid var(--success); }
+        .toast-error { border-left: 4px solid var(--danger); }
+        .toast-info { border-left: 4px solid var(--primary); }
+
+        /* Authenticated Dashboard Card (State Transition) */
+        .dashboard-view {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 20px;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        .user-avatar-large {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f46e5, #ec4899);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #ffffff;
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.35);
+        }
+
+        .user-meta-info {
+            background: #0d1320;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-size: 0.86rem;
+            text-align: left;
+        }
+
+        .meta-item {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+        }
+
+        .meta-item span:last-child {
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        /* Modal Backdrop (Forgot Password) */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 500;
+            padding: 20px;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            max-width: 420px;
+            width: 100%;
+            padding: 28px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Atmospheric Glows -->
+    <div class="glow-sphere sphere-1"></div>
+    <div class="glow-sphere sphere-2"></div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Auth Card -->
+    <main class="auth-container" id="authContainer">
+
+        <!-- Auth View Container -->
+        <div id="authView">
+            <header class="auth-header">
+                <div class="brand-logo">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                </div>
+                <h1 class="auth-title" id="formHeading">Welcome Back</h1>
+                <p class="auth-subtitle" id="formSubheading">Sign in to your dashboard to continue</p>
+            </header>
+
+            <!-- Mode Switcher Tabs -->
+            <nav class="tab-switcher">
+                <button class="tab-btn active" id="tabLoginBtn" onclick="AuthEngine.switchTab('login')">Sign In</button>
+                <button class="tab-btn" id="tabSignupBtn" onclick="AuthEngine.switchTab('signup')">Sign Up</button>
+            </nav>
+
+            <!-- 1. LOGIN FORM -->
+            <form class="auth-form active" id="loginForm" onsubmit="AuthEngine.handleLogin(event)" novalidate>
+                <div class="form-group">
+                    <label class="form-label" for="loginEmail">Email Address</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                        </span>
+                        <input type="email" id="loginEmail" class="form-input" placeholder="name@company.com" autocomplete="email" required>
+                    </div>
+                    <span class="field-error" id="loginEmailError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="loginPassword">
+                        Password
+                        <a class="link-text" onclick="AuthEngine.openForgotModal()">Forgot?</a>
+                    </label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </span>
+                        <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" autocomplete="current-password" required>
+                        <button type="button" class="btn-toggle-pwd" onclick="AuthEngine.togglePasswordVisibility('loginPassword', this)" title="Show/Hide password">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                    <span class="field-error" id="loginPasswordError"></span>
+                </div>
+
+                <div class="form-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="rememberMe" class="custom-checkbox">
+                        Remember this device
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-submit" id="btnLoginSubmit">
+                    <span>Sign In</span>
+                    <span>→</span>
+                </button>
+            </form>
+
+            <!-- 2. SIGN UP FORM -->
+            <form class="auth-form" id="signupForm" onsubmit="AuthEngine.handleSignup(event)" novalidate>
+                <div class="form-group">
+                    <label class="form-label" for="signupName">Full Name</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        </span>
+                        <input type="text" id="signupName" class="form-input" placeholder="Alex Morgan" autocomplete="name" required>
+                    </div>
+                    <span class="field-error" id="signupNameError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="signupEmail">Email Address</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                        </span>
+                        <input type="email" id="signupEmail" class="form-input" placeholder="alex@company.com" autocomplete="email" required>
+                    </div>
+                    <span class="field-error" id="signupEmailError"></span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="signupPassword">Create Password</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </span>
+                        <input type="password" id="signupPassword" class="form-input" placeholder="Min. 8 characters" autocomplete="new-password" oninput="AuthEngine.evaluatePasswordStrength(this.value)" required>
+                        <button type="button" class="btn-toggle-pwd" onclick="AuthEngine.togglePasswordVisibility('signupPassword', this)" title="Show/Hide password">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
+                    <span class="field-error" id="signupPasswordError"></span>
+
+                    <!-- Live Password Strength Meter -->
+                    <div class="pwd-strength-container" id="pwdStrengthContainer">
+                        <div class="pwd-strength-bars">
+                            <div class="pwd-bar" id="bar1"></div>
+                            <div class="pwd-bar" id="bar2"></div>
+                            <div class="pwd-bar" id="bar3"></div>
+                            <div class="pwd-bar" id="bar4"></div>
+                        </div>
+                        <div class="pwd-strength-text">
+                            <span id="strengthLabel">Strength: None</span>
+                            <span id="strengthHint">Must include upper, number & symbol</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="termsCheck" class="custom-checkbox" required>
+                        I agree to the <a class="link-text" onclick="AuthEngine.showTermsInfo()">Terms of Service</a>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-submit" id="btnSignupSubmit">
+                    <span>Create Free Account</span>
+                    <span>→</span>
+                </button>
+            </form>
+
+            <!-- Social Providers Simulation -->
+            <div class="divider"><span>Or continue with</span></div>
+
+            <div class="social-buttons">
+                <button type="button" class="btn-social" onclick="AuthEngine.mockOAuthLogin('Google')">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.7-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.8s.2-2.1.4-2.8L1.9 6.3C.7 8.7 0 10.8 0 12s.7 3.3 1.9 5.7l3.7-2.9z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"/></svg>
+                    Google
+                </button>
+                <button type="button" class="btn-social" onclick="AuthEngine.mockOAuthLogin('GitHub')">
+                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+                    GitHub
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. AUTHENTICATED DASHBOARD HUB VIEW -->
+        <div class="dashboard-view" id="dashboardView">
+            <div class="user-avatar-large" id="dashAvatar">U</div>
+            <div>
+                <h2 class="auth-title" id="dashWelcome">Hello, User!</h2>
+                <p class="auth-subtitle">Authentication session active & secure</p>
+            </div>
+
+            <div class="user-meta-info">
+                <div class="meta-item">
+                    <span>Email Account:</span>
+                    <span id="dashEmail">user@example.com</span>
+                </div>
+                <div class="meta-item">
+                    <span>Account Status:</span>
+                    <span style="color: var(--success); display: inline-flex; align-items: center; gap: 6px;">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>
+                        Active & Verified
+                    </span>
+                </div>
+                <div class="meta-item">
+                    <span>Session Storage:</span>
+                    <span id="dashSessionType">Local Persistent</span>
+                </div>
+                <div class="meta-item">
+                    <span>Member Since:</span>
+                    <span id="dashCreatedDate">Just now</span>
+                </div>
+            </div>
+
+            <button type="button" class="btn-submit" onclick="AuthEngine.handleLogout()" style="background: #334155;">
+                <span>Sign Out of Account</span>
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal-backdrop" id="forgotModal">
+        <div class="modal-box">
+            <h3 style="font-size: 1.25rem; font-weight: 700;">Reset Password</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Enter your email address and we'll dispatch an instant reset link simulation.</p>
+
+            <div class="form-group">
+                <label class="form-label" for="forgotEmail">Your Registered Email</label>
+                <input type="email" id="forgotEmail" class="form-input" placeholder="name@company.com" style="padding-left: 14px;">
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px;">
+                <button type="button" class="tab-btn" onclick="AuthEngine.closeForgotModal()">Cancel</button>
+                <button type="button" class="btn-submit" style="width: auto; padding: 8px 18px;" onclick="AuthEngine.handleForgotSubmit()">Send Link</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC ENGINE -->
+    <script>
+        /**
+         * AuthEngine: Self-contained authentication, validation, session,
+         * security meter, and reactive state management controller.
+         */
+        const AuthEngine = (() => {
+            // LocalStorage Keys
+            const DB_USERS_KEY = "nexauth_registered_users";
+            const SESSION_KEY = "nexauth_active_session";
+
+            // State
+            let currentTab = "login";
+
+            // Initialize on DOM load
+            function init() {
+                checkActiveSession();
+                setupRealtimeValidation();
+            }
+
+            /* --- Session Management --- */
+            function checkActiveSession() {
+                const session = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY);
+                if (session) {
+                    try {
+                        const user = JSON.parse(session);
+                        showDashboard(user);
+                    } catch (e) {
+                        clearSession();
+                    }
+                }
+            }
+
+            function clearSession() {
+                localStorage.removeItem(SESSION_KEY);
+                sessionStorage.removeItem(SESSION_KEY);
+            }
+
+            function showDashboard(user) {
+                document.getElementById('authView').style.display = 'none';
+                const dashView = document.getElementById('dashboardView');
+                dashView.style.display = 'flex';
+
+                const initial = (user.name || user.email || 'U').charAt(0).toUpperCase();
+                document.getElementById('dashAvatar').textContent = initial;
+                document.getElementById('dashWelcome').textContent = `Hello, ${user.name || 'Friend'}!`;
+                document.getElementById('dashEmail').textContent = user.email;
+                document.getElementById('dashSessionType').textContent = localStorage.getItem(SESSION_KEY) ? 'Remembered (Persistent)' : 'Current Tab Only';
+                document.getElementById('dashCreatedDate').textContent = user.createdAt || new Date().toLocaleDateString();
+            }
+
+            function handleLogout() {
+                clearSession();
+                document.getElementById('dashboardView').style.display = 'none';
+                document.getElementById('authView').style.display = 'block';
+                switchTab('login');
+                showToast("Signed out successfully", "info");
+            }
+
+            /* --- Tab Navigation --- */
+            function switchTab(tab) {
+                currentTab = tab;
+                const isLogin = tab === 'login';
+
+                document.getElementById('tabLoginBtn').classList.toggle('active', isLogin);
+                document.getElementById('tabSignupBtn').classList.toggle('active', !isLogin);
+
+                document.getElementById('loginForm').classList.toggle('active', isLogin);
+                document.getElementById('signupForm').classList.toggle('active', !isLogin);
+
+                const heading = document.getElementById('formHeading');
+                const subheading = document.getElementById('formSubheading');
+
+                if (isLogin) {
+                    heading.textContent = "Welcome Back";
+                    subheading.textContent = "Sign in to your dashboard to continue";
+                } else {
+                    heading.textContent = "Create Account";
+                    subheading.textContent = "Start your 30-day free trial today";
+                }
+
+                clearAllErrors();
+            }
+
+            /* --- Realtime Input Validation --- */
+            function setupRealtimeValidation() {
+                const emailInputs = [document.getElementById('loginEmail'), document.getElementById('signupEmail')];
+                emailInputs.forEach(input => {
+                    input.addEventListener('blur', () => validateEmail(input));
+                    input.addEventListener('input', () => clearInputError(input));
+                });
+
+                document.getElementById('signupName').addEventListener('input', function() {
+                    if (this.value.trim().length >= 2) clearInputError(this);
+                });
+
+                document.getElementById('loginPassword').addEventListener('input', function() {
+                    if (this.value.length > 0) clearInputError(this);
+                });
+            }
+
+            function validateEmail(input) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                const isValid = emailRegex.test(input.value.trim());
+                const errorElem = document.getElementById(input.id + 'Error');
+
+                if (!input.value.trim()) {
+                    showInputError(input, errorElem, "Email address is required");
+                    return false;
+                } else if (!isValid) {
+                    showInputError(input, errorElem, "Please enter a valid email (e.g. name@domain.com)");
+                    return false;
+                } else {
+                    clearInputError(input, errorElem);
+                    input.classList.add('success');
+                    return true;
+                }
+            }
+
+            function showInputError(input, errorElem, message) {
+                input.classList.remove('success');
+                input.classList.add('error');
+                if (errorElem) {
+                    errorElem.textContent = message;
+                    errorElem.style.display = 'block';
+                }
+            }
+
+            function clearInputError(input, errorElem) {
+                input.classList.remove('error');
+                const err = errorElem || document.getElementById(input.id + 'Error');
+                if (err) {
+                    err.textContent = '';
+                    err.style.display = 'none';
+                }
+            }
+
+            function clearAllErrors() {
+                document.querySelectorAll('.form-input').forEach(input => {
+                    input.classList.remove('error', 'success');
+                });
+                document.querySelectorAll('.field-error').forEach(err => {
+                    err.textContent = '';
+                    err.style.display = 'none';
+                });
+            }
+
+            /* --- Password Strength Evaluation --- */
+            function evaluatePasswordStrength(password) {
+                const container = document.getElementById('pwdStrengthContainer');
+                if (!password) {
+                    container.style.display = 'none';
+                    return 0;
+                }
+                container.style.display = 'flex';
+
+                let score = 0;
+                if (password.length >= 8) score++;
+                if (/[A-Z]/.test(password)) score++;
+                if (/[0-9]/.test(password)) score++;
+                if (/[^A-Za-z0-9]/.test(password)) score++;
+
+                const bars = [document.getElementById('bar1'), document.getElementById('bar2'), document.getElementById('bar3'), document.getElementById('bar4')];
+                const label = document.getElementById('strengthLabel');
+
+                const colors = ['#ef4444', '#f59e0b', '#38bdf8', '#10b981'];
+                const labels = ['Weak', 'Moderate', 'Good', 'Strong!'];
+
+                bars.forEach((bar, index) => {
+                    if (index < score) {
+                        bar.style.backgroundColor = colors[score - 1];
+                    } else {
+                        bar.style.backgroundColor = '#1e293b';
+                    }
+                });
+
+                label.textContent = `Strength: ${score > 0 ? labels[score - 1] : 'Too Short'}`;
+                label.style.color = score > 0 ? colors[score - 1] : 'var(--text-dim)';
+
+                return score;
+            }
+
+            /* --- Form Submission Handlers --- */
+            function handleLogin(e) {
+                e.preventDefault();
+                const emailInput = document.getElementById('loginEmail');
+                const pwdInput = document.getElementById('loginPassword');
+                const rememberMe = document.getElementById('rememberMe').checked;
+
+                const isEmailValid = validateEmail(emailInput);
+                let hasError = !isEmailValid;
+
+                if (!pwdInput.value) {
+                    showInputError(pwdInput, document.getElementById('loginPasswordError'), "Please provide your password");
+                    hasError = true;
+                }
+
+                if (hasError) return;
+
+                // Animate button spinner
+                const submitBtn = document.getElementById('btnLoginSubmit');
+                setButtonLoading(submitBtn, true);
+
+                setTimeout(() => {
+                    // Check Mock Database
+                    const users = JSON.parse(localStorage.getItem(DB_USERS_KEY) || "[]");
+                    const matchedUser = users.find(u => u.email.toLowerCase() === emailInput.value.trim().toLowerCase() && u.password === pwdInput.value);
+
+                    setButtonLoading(submitBtn, false, "Sign In →");
+
+                    if (matchedUser) {
+                        const sessionData = JSON.stringify({
+                            name: matchedUser.name,
+                            email: matchedUser.email,
+                            createdAt: matchedUser.createdAt
+                        });
+
+                        if (rememberMe) {
+                            localStorage.setItem(SESSION_KEY, sessionData);
+                        } else {
+                            sessionStorage.setItem(SESSION_KEY, sessionData);
+                        }
+
+                        showToast(`Welcome back, ${matchedUser.name}!`, "success");
+                        showDashboard(matchedUser);
+                    } else {
+                        showToast("Invalid email or password. Please try again.", "error");
+                        showInputError(pwdInput, document.getElementById('loginPasswordError'), "Incorrect credentials");
+                    }
+                }, 750);
+            }
+
+            function handleSignup(e) {
+                e.preventDefault();
+                const nameInput = document.getElementById('signupName');
+                const emailInput = document.getElementById('signupEmail');
+                const pwdInput = document.getElementById('signupPassword');
+                const termsCheck = document.getElementById('termsCheck');
+
+                let hasError = false;
+
+                if (nameInput.value.trim().length < 2) {
+                    showInputError(nameInput, document.getElementById('signupNameError'), "Name must be at least 2 characters");
+                    hasError = true;
+                }
+
+                if (!validateEmail(emailInput)) {
+                    hasError = true;
+                }
+
+                const strength = evaluatePasswordStrength(pwdInput.value);
+                if (pwdInput.value.length < 8) {
+                    showInputError(pwdInput, document.getElementById('signupPasswordError'), "Password must contain at least 8 characters");
+                    hasError = true;
+                }
+
+                if (!termsCheck.checked) {
+                    showToast("Please accept the Terms of Service to continue", "error");
+                    hasError = true;
+                }
+
+                if (hasError) return;
+
+                // Animate button spinner
+                const submitBtn = document.getElementById('btnSignupSubmit');
+                setButtonLoading(submitBtn, true);
+
+                setTimeout(() => {
+                    const users = JSON.parse(localStorage.getItem(DB_USERS_KEY) || "[]");
+                    const userExists = users.some(u => u.email.toLowerCase() === emailInput.value.trim().toLowerCase());
+
+                    if (userExists) {
+                        setButtonLoading(submitBtn, false, "Create Free Account →");
+                        showToast("An account with this email already exists", "error");
+                        showInputError(emailInput, document.getElementById('signupEmailError'), "Email already in use");
+                        return;
+                    }
+
+                    const newUser = {
+                        id: 'usr_' + Date.now(),
+                        name: nameInput.value.trim(),
+                        email: emailInput.value.trim(),
+                        password: pwdInput.value,
+                        createdAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    };
+
+                    users.push(newUser);
+                    localStorage.setItem(DB_USERS_KEY, JSON.stringify(users));
+
+                    // Auto login to session
+                    localStorage.setItem(SESSION_KEY, JSON.stringify({
+                        name: newUser.name,
+                        email: newUser.email,
+                        createdAt: newUser.createdAt
+                    }));
+
+                    setButtonLoading(submitBtn, false, "Create Free Account →");
+                    showToast("Account created successfully! Welcome aboard.", "success");
+                    showDashboard(newUser);
+                }, 850);
+            }
+
+            function setButtonLoading(button, isLoading, fallbackText = "") {
+                if (isLoading) {
+                    button.disabled = true;
+                    button.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 0.8s linear infinite;"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Authenticating...`;
+                } else {
+                    button.disabled = false;
+                    button.innerHTML = fallbackText;
+                }
+            }
+
+            /* --- Utilities --- */
+            function togglePasswordVisibility(inputId, button) {
+                const input = document.getElementById(inputId);
+                const eyeSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+                const eyeOffSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`;
+
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    button.innerHTML = eyeOffSvg;
+                } else {
+                    input.type = 'password';
+                    button.innerHTML = eyeSvg;
+                }
+            }
+
+            function mockOAuthLogin(provider) {
+                showToast(`Connecting to ${provider} OAuth...`, "info");
+                setTimeout(() => {
+                    const mockUser = {
+                        name: `${provider} User`,
+                        email: `auth.${provider.toLowerCase()}@example.com`,
+                        createdAt: new Date().toLocaleDateString()
+                    };
+                    localStorage.setItem(SESSION_KEY, JSON.stringify(mockUser));
+                    showToast(`Successfully verified via ${provider}!`, "success");
+                    showDashboard(mockUser);
+                }, 1000);
+            }
+
+            function showToast(message, type = "info") {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+
+                const icons = {
+                    success: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+                    error: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+                    info: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`
+                };
+                toast.innerHTML = `
+                    <span class="toast-icon" style="display: flex; align-items: center;">${icons[type] || ''}</span>
+                    <span>${message}</span>
+                `;
+
+                container.appendChild(toast);
+                setTimeout(() => toast.classList.add('show'), 10);
+
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3500);
+            }
+
+            function openForgotModal() {
+                document.getElementById('forgotModal').classList.add('open');
+                document.getElementById('forgotEmail').value = document.getElementById('loginEmail').value;
+            }
+
+            function closeForgotModal() {
+                document.getElementById('forgotModal').classList.remove('open');
+            }
+
+            function handleForgotSubmit() {
+                const email = document.getElementById('forgotEmail').value.trim();
+                if (!email) {
+                    showToast("Please enter your registered email", "error");
+                    return;
+                }
+                closeForgotModal();
+                showToast(`Password recovery instructions dispatched to ${email}`, "success");
+            }
+
+            function showTermsInfo() {
+                showToast("Terms of Service: All account credentials are encrypted and stored locally.", "info");
+            }
+
+            return {
+                init,
+                switchTab,
+                handleLogin,
+                handleSignup,
+                handleLogout,
+                togglePasswordVisibility,
+                evaluatePasswordStrength,
+                mockOAuthLogin,
+                openForgotModal,
+                closeForgotModal,
+                handleForgotSubmit,
+                showTermsInfo
+            };
+        })();
+
+        // Start engine
+        document.addEventListener('DOMContentLoaded', AuthEngine.init);
+    </script>
+</body>
+</html>
